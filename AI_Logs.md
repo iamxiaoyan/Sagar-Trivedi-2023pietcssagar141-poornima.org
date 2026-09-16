@@ -240,6 +240,55 @@ Detailed checklist confirmed:
 
 ---
 
+## 17. Response-Time Escalation Enhancement
+
+**User:** Requested an automated check that escalates every ticket that has
+breached its agreed response time by one level per run: normal to high to
+urgent.
+
+**AI Actions:**
+1. Inspected the complete project structure, source files, tests, package
+   configuration, README, and reasoning document.
+2. Ran the unchanged test suite: 66 tests passed.
+3. Preserved ticket-creation validation, so external clients can still create
+   only normal or urgent tickets. High is an internal escalation state.
+4. Added a service-level escalation function that checks overdue status,
+   advances normal to high and high to urgent, escalates at most one level per
+   run, and preserves responseDueAt.
+5. Added an application-started background job that runs immediately and then
+   every minute. Its timer is unreferenced so it does not keep test processes
+   alive.
+6. Extended queue ranking for the internal high priority and added focused
+   tests for escalation, deadline boundaries, scheduled execution, and queue
+   ordering.
+
+**Result:** Final test suite passed: 70 tests passed, 0 failed.
+
+---
+
+## 18. GitHub Commit and Push
+
+**User:** Requested that the enhancement be pushed to the existing GitHub
+repository.
+
+**AI Actions:** Verified the remote and main branch, committed the completed
+enhancement, and pushed it to origin/main.
+
+**Result:** Commit 8350ff0, Add response-time escalation check, was pushed to
+the main branch.
+
+---
+
+## 19. AI Log Update Request
+
+**User:** Requested that this Codex conversation be added to AI_Logs.md and
+committed without changing any other project files.
+
+**AI Action:** Appended this session record to AI_Logs.md only. The next
+commit will contain only this log-file update.
+
+---
+
 ## Final Project State
 
 ### Files Created
