@@ -45,6 +45,30 @@ function assignTicket(id, assignedTo) {
 }
 
 /**
+ * Raise the priority of every ticket that has breached its agreed response
+ * time by one level. The agreed deadline is deliberately not changed: this
+ * check records urgency, rather than granting a new response window.
+ *
+ * @param {Date} [now=new Date()] - Reference time (for scheduling and tests)
+ * @returns {Object[]} Tickets escalated during this run
+ */
+function escalateBreachedTickets(now = new Date()) {
+  const nextPriority = {
+    normal: 'high',
+    high: 'urgent',
+  };
+
+  return tickets.filter((ticket) => {
+    if (!isOverdue(ticket, now) || !nextPriority[ticket.priority]) {
+      return false;
+    }
+
+    ticket.priority = nextPriority[ticket.priority];
+    return true;
+  });
+}
+
+/**
  * Retrieve tickets with optional filters, proper queue ordering,
  * and pagination.
  *
@@ -127,6 +151,7 @@ module.exports = {
   addTicket,
   getTicketById,
   assignTicket,
+  escalateBreachedTickets,
   getTickets,
   clearAll,
 };

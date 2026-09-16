@@ -29,7 +29,8 @@ const { isOverdue } = require('../models/ticket');
 // Lower number = higher priority in sort
 const PRIORITY_RANK = {
   urgent: 0,
-  normal: 1,
+  high: 1,
+  normal: 2,
 };
 
 /**

@@ -20,6 +20,7 @@ const app = require('../src/app');
 const ticketService = require('../src/services/ticketService');
 const { isOverdue, RESPONSE_TIME_MS } = require('../src/models/ticket');
 const { sortQueue } = require('../src/utils/queueSorter');
+const { startResponseTimeEscalation } = require('../src/jobs/responseTimeEscalation');
 
 // Reset the in-memory store before each test
 beforeEach(() => {
@@ -439,6 +440,66 @@ describe('Overdue detection via service', () => {
 // ─────────────────────────────────────────────────────────────────────
 //  8. CUSTOMER LOOKUP
 // ─────────────────────────────────────────────────────────────────────
+
+describe('Response-time escalation', () => {
+  test('escalates an overdue normal ticket one level per run without changing its deadline', () => {
+    const ticket = ticketService.addTicket({
+      customerName: 'A',
+      title: 'Breached response time',
+      priority: 'normal',
+    });
+    const originalDueAt = ticket.responseDueAt;
+    const afterDeadline = new Date(new Date(originalDueAt).getTime() + 1);
+
+    expect(ticketService.escalateBreachedTickets(afterDeadline)).toEqual([ticket]);
+    expect(ticket.priority).toBe('high');
+    expect(ticket.responseDueAt).toBe(originalDueAt);
+
+    expect(ticketService.escalateBreachedTickets(afterDeadline)).toEqual([ticket]);
+    expect(ticket.priority).toBe('urgent');
+    expect(ticketService.escalateBreachedTickets(afterDeadline)).toEqual([]);
+  });
+
+  test('does not escalate a ticket that has not breached its agreed response time', () => {
+    const ticket = ticketService.addTicket({
+      customerName: 'A',
+      title: 'Within response time',
+      priority: 'normal',
+    });
+
+    expect(ticketService.escalateBreachedTickets(new Date(ticket.responseDueAt))).toEqual([]);
+    expect(ticket.priority).toBe('normal');
+  });
+
+  test('the scheduled check immediately processes existing breached tickets', () => {
+    const ticket = ticketService.addTicket({
+      customerName: 'A',
+      title: 'Scheduled breach',
+      priority: 'normal',
+    });
+    ticket.responseDueAt = new Date(Date.now() - 1).toISOString();
+
+    const interval = startResponseTimeEscalation();
+
+    expect(ticket.priority).toBe('high');
+    clearInterval(interval);
+  });
+
+  test('places escalated high tickets between urgent and normal tickets in queue order', () => {
+    const now = new Date('2026-09-16T12:00:00.000Z');
+    const tickets = [
+      { id: 'normal', priority: 'normal', createdAt: now.toISOString(), responseDueAt: '2026-09-17T12:00:00.000Z' },
+      { id: 'high', priority: 'high', createdAt: now.toISOString(), responseDueAt: '2026-09-17T12:00:00.000Z' },
+      { id: 'urgent', priority: 'urgent', createdAt: now.toISOString(), responseDueAt: '2026-09-17T12:00:00.000Z' },
+    ];
+
+    expect(sortQueue(tickets, now).map((ticket) => ticket.id)).toEqual([
+      'urgent',
+      'high',
+      'normal',
+    ]);
+  });
+});
 
 describe('GET /tickets?customerName=...', () => {
   beforeEach(async () => {

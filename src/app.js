@@ -6,6 +6,7 @@
 
 const express = require('express');
 const ticketRoutes = require('./routes/ticketRoutes');
+const { startResponseTimeEscalation } = require('./jobs/responseTimeEscalation');
 
 const app = express();
 
@@ -14,6 +15,9 @@ app.use(express.json());
 
 // Mount ticket routes under /tickets
 app.use('/tickets', ticketRoutes);
+
+// Keep response-time breaches escalated while the API is running.
+startResponseTimeEscalation();
 
 // Health check
 app.get('/', (_req, res) => {

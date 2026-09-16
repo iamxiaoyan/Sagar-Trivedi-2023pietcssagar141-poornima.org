@@ -5,6 +5,8 @@ A REST API built with **Node.js** and **Express** for managing helpdesk tickets 
 ## Features
 
 - **Create tickets** with automatic deadline calculation
+- **Automated breach escalation** every minute: overdue tickets advance one
+  level (normal to high to urgent) without changing their agreed deadline
 - **Priority queue** — overdue tickets always appear first
 - **Response-time policy** — urgent: 2 hours, normal: 24 hours
 - **Filter** by customer name, assignee, or overdue status
